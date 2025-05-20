@@ -1,9 +1,11 @@
-export async function sendCartToSFMC({ email, name, cartItems }) {
-  const timestamp = new Date().toLocaleString("en-US"); // Or use SFMC format
+// ✅ Valid in normal browser script
+async function sendCartToSFMC(data) {
+  const timestamp = new Date().toLocaleString("en-US");
+
   const formData = new URLSearchParams({
-    email,
-    name,
-    cartItems: JSON.stringify(cartItems),
+    email: data.email,
+    name: data.name,
+    cartItems: JSON.stringify(data.cartItems),
     timestamp
   });
 
@@ -14,5 +16,5 @@ export async function sendCartToSFMC({ email, name, cartItems }) {
   });
 
   const result = await response.text();
-  console.log("SFMC Response:", result);
+  console.log("SFMC response:", result);
 }
