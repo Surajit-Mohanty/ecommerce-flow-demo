@@ -30,7 +30,7 @@
     const name = localStorage.getItem("user_name");
     const loginTime = localStorage.getItem("login_time");
     if (!email || !name) {
-      window.location.href = "login.html";
+      window.location.href = "index.html";
     } else {
       document.getElementById("userInfo").innerText = name + " (" + email + ")";
       document.getElementById("loginTime").innerText = loginTime;
