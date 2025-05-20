@@ -1,43 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Products</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    #header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+    body { font-family: Arial; max-width: 800px; margin: auto; }
+    #productList > div { border: 1px solid #ddd; padding: 15px; margin: 10px 0; display: flex; align-items: center; }
+    #productList img { margin-right: 20px; width: 80px; height: auto; }
+    button { padding: 10px 15px; margin-top: 10px; }
+    header { display: flex; justify-content: space-between; margin-bottom: 20px; }
   </style>
 </head>
 <body>
-  <div id="header">
+  <header>
     <div>
-      <strong id="userInfo"></strong><br>
-      <span id="loginTime"></span>
+      <strong>User:</strong> <span id="userInfo"></span><br>
+      <strong>Login Time:</strong> <span id="loginTime"></span>
     </div>
     <button onclick="logout()">Logout</button>
-  </div>
+  </header>
 
   <h1>Available Products</h1>
   <div id="productList"></div>
-  <br />
-  <a href="cart.html">View Cart</a>
+  <button onclick="window.location.href='cart.html'">View Cart</button>
 
   <script>
-    const name = localStorage.getItem("user_name");
     const email = localStorage.getItem("user_email");
+    const name = localStorage.getItem("user_name");
     const loginTime = localStorage.getItem("login_time");
+    if (!email || !name) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("userInfo").innerText = name + " (" + email + ")";
+      document.getElementById("loginTime").innerText = loginTime;
+    }
 
-    if (!email) {
+    function logout() {
+      localStorage.clear();
       window.location.href = "login.html";
     }
 
-    document.getElementById("userInfo").textContent = `Logged in as: ${name} (${email})`;
-    document.getElementById("loginTime").textContent = `Login Time: ${loginTime}`;
-
     const products = [
       { item: "p1", name: "Laptop", price: 999.99, image: "https://m.media-amazon.com/images/I/510uTHyDqGL._AC_UF1000,1000_QL80_.jpg" },
-      { item: "p2", name: "Phone", price: 499.99, image: "https://m.media-amazon.com/images/I/712SuRmHG4L._AC_UF1000,1000_QL80_.jpg" },
-      { item: "p3", name: "Headphones", price: 199.99, image: "https://m.media-amazon.com/images/I/41tp0JPPlmL.jpg" },
+      { item: "p2", name: "Phone", price: 499.99, image: "https://via.placeholder.com/80" },
+      { item: "p3", name: "Headphones", price: 199.99, image: "https://via.placeholder.com/80" },
     ];
 
     const container = document.getElementById("productList");
@@ -45,11 +52,12 @@
     products.forEach(product => {
       const div = document.createElement("div");
       div.innerHTML = `
-        <img src="${product.image}" alt="${product.name}" /><br/>
-        <strong>${product.name}</strong><br/>
-        Price: $${product.price}<br/>
-        <button onclick='addToCart(${JSON.stringify(product)})'>Add to Cart</button>
-        <hr/>
+        <img src="${product.image}" alt="${product.name}">
+        <div>
+          <strong>${product.name}</strong><br/>
+          Price: $${product.price}<br/>
+          <button onclick='addToCart(${JSON.stringify(product)})'>Add to Cart</button>
+        </div>
       `;
       container.appendChild(div);
     });
@@ -67,11 +75,6 @@
 
       localStorage.setItem(cartKey, JSON.stringify(cart));
       alert(`${item.name} added to cart!`);
-    }
-
-    function logout() {
-      localStorage.clear();
-      window.location.href = "login.html";
     }
   </script>
 </body>
