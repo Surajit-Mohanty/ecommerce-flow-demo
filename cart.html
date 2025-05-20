@@ -5,27 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cart</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-    .user-info {
-      font-size: 14px;
-    }
-    .logout {
-      font-size: 14px;
-    }
-    .cart-item {
-      margin: 10px 0;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+    .user-info, .logout { font-size: 14px; }
+    .cart-item { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
   </style>
 </head>
 <body>
@@ -46,8 +29,16 @@
 
   <button onclick="sendToSFMC()">Send to SFMC</button>
 
+  <!-- Hidden form to submit cart data -->
+  <form id="sfmcForm" action="https://mcbpcpxtk6qzkpnzk1spgzn07rh0.pub.sfmc-content.com/dyp1jbqcr2l" method="POST" style="display: none;">
+    <input type="hidden" name="email" />
+    <input type="hidden" name="name" />
+    <input type="hidden" name="cartItems" />
+    <input type="hidden" name="timestamp" />
+  </form>
+
   <script>
-    // Load user info
+    // Display user info
     document.getElementById("userName").textContent = localStorage.getItem("name") || "Unknown";
     document.getElementById("userEmail").textContent = localStorage.getItem("email") || "unknown@example.com";
     document.getElementById("loginTime").textContent = localStorage.getItem("loginTime") || "N/A";
@@ -67,39 +58,22 @@
       });
     }
 
-    // Main sending function
-    async function sendToSFMC() {
+    // Send cart data to SFMC
+    function sendToSFMC() {
       const name = localStorage.getItem("name") || "Unknown";
       const email = localStorage.getItem("email") || "unknown@example.com";
       const cartItems = JSON.stringify(cart);
       const timestamp = new Date().toLocaleString("en-US");
 
-      const formData = new URLSearchParams({
-        email,
-        name,
-        cartItems,
-        timestamp
-      });
+      const form = document.getElementById("sfmcForm");
+      form.email.value = email;
+      form.name.value = name;
+      form.cartItems.value = cartItems;
+      form.timestamp.value = timestamp;
 
-      try {
-        const response = await fetch("https://mcbpcpxtk6qzkpnzk1spgzn07rh0.pub.sfmc-content.com/dyp1jbqcr2l", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: formData
-        });
-
-        const result = await response.text();
-        console.log("SFMC response:", result);
-        alert("Cart data sent to SFMC successfully.");
-      } catch (error) {
-        console.error("Error sending to SFMC:", error);
-        alert("Failed to send data to SFMC.");
-      }
+      form.submit(); // Submits the form (CORS-safe)
     }
 
-    // Logout function
     function logout() {
       localStorage.clear();
       window.location.href = "index.html";
