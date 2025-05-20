@@ -1,32 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>Products</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .user-info {
+      font-size: 14px;
+    }
+    .logout button {
+      font-size: 14px;
+      padding: 5px 10px;
+    }
+    .product {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+  </style>
 </head>
 <body>
-  <h2>Products</h2>
-  <div id="products"></div>
+
+  <div class="header">
+    <div class="user-info">
+      <strong>Name:</strong> <span id="userName">-</span><br/>
+      <strong>Email:</strong> <span id="userEmail">-</span><br/>
+      <strong>Login Time:</strong> <span id="loginTime">-</span>
+    </div>
+    <div class="logout">
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <h1>Available Products</h1>
+  <div id="productList"></div>
+
+  <br />
   <a href="cart.html">View Cart</a>
 
-  <script src="common.js"></script>
   <script>
-    renderHeader();
+    // Check for login
+    const name = localStorage.getItem("name");
+    const email = localStorage.getItem("email");
+    const loginTime = localStorage.getItem("loginTime");
+
+    if (!email || !name) {
+      window.location.href = "login.html"; // Redirect if not logged in
+    }
+
+    // Show user info
+    document.getElementById("userName").textContent = name;
+    document.getElementById("userEmail").textContent = email;
+    document.getElementById("loginTime").textContent = loginTime || "N/A";
+
+    // Product list
     const products = [
-      { id: 1, name: "Product A", price: 10 },
-      { id: 2, name: "Product B", price: 20 }
+      { item: "p1", name: "Laptop", price: 999.99, item_type: "product" },
+      { item: "p2", name: "Phone", price: 499.99, item_type: "product" },
+      { item: "p3", name: "Headphones", price: 199.99, item_type: "product" },
     ];
 
-    const container = document.getElementById('products');
-    products.forEach(p => {
-      const div = document.createElement('div');
-      div.className = 'product';
+    const container = document.getElementById("productList");
+
+    products.forEach(product => {
+      const div = document.createElement("div");
+      div.className = "product";
       div.innerHTML = `
-        <strong>${p.name}</strong> - $${p.price}
-        <button onclick='addToCart({id:${p.id}, name:"${p.name}", price:${p.price}, qty:1})'>Add</button>
+        <strong>${product.name}</strong><br/>
+        Price: $${product.price}<br/>
+        <button onclick='addToCart(${JSON.stringify(product)})'>Add to Cart</button>
       `;
       container.appendChild(div);
     });
+
+    function addToCart(item) {
+      const cartKey = `cart_items_${email}`;
+      let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
+
+      const existing = cart.find(i => i.item === item.item);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({ ...item, quantity: 1, url: window.location.href });
+      }
+
+      localStorage.setItem(cartKey, JSON.stringify(cart));
+      alert(`${item.name} added to cart!`);
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
   </script>
+
 </body>
 </html>
