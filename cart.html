@@ -2,20 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cart</title>
+  <title>Your Cart</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-    .user-info, .logout { font-size: 14px; }
-    .cart-item { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .user-info {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .logout button {
+      font-size: 14px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    img.product-image {
+      max-width: 80px;
+      max-height: 60px;
+      object-fit: contain;
+    }
+    .total {
+      font-weight: bold;
+      text-align: right;
+      padding-right: 20px;
+    }
+    .empty-cart {
+      font-size: 18px;
+      color: #777;
+      text-align: center;
+      margin-top: 50px;
+    }
+    a.back-to-products {
+      display: inline-block;
+      margin-bottom: 20px;
+      font-size: 16px;
+      text-decoration: none;
+      color: #007BFF;
+    }
+    a.back-to-products:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
 
   <div class="header">
     <div class="user-info">
-      <strong>User:</strong> <span id="userName">-</span><br/>
+      <strong>Name:</strong> <span id="userName">-</span><br/>
       <strong>Email:</strong> <span id="userEmail">-</span><br/>
       <strong>Login Time:</strong> <span id="loginTime">-</span>
     </div>
@@ -24,60 +76,151 @@
     </div>
   </div>
 
-  <h2>Your Cart</h2>
-  <div id="cartItemsContainer"></div>
+  <h1>Your Cart</h1>
+  <a href="products.html" class="back-to-products">← Continue Shopping</a>
 
-  <button onclick="sendToSFMC()">Send to SFMC</button>
+  <div id="cartContainer"></div>
 
-  <!-- Hidden form to submit cart data -->
-  <form id="sfmcForm" action="https://mcbpcpxtk6qzkpnzk1spgzn07rh0.pub.sfmc-content.com/dyp1jbqcr2l" method="POST" style="display: none;">
-    <input type="hidden" name="email" />
-    <input type="hidden" name="name" />
-    <input type="hidden" name="cartItems" />
-    <input type="hidden" name="timestamp" />
-  </form>
+  <button onclick="sendToSFMC()" id="sendToSFMCBtn">Send Cart to SFMC</button>
 
   <script>
-    // Display user info
-    document.getElementById("userName").textContent = localStorage.getItem("name") || "Unknown";
-    document.getElementById("userEmail").textContent = localStorage.getItem("email") || "unknown@example.com";
-    document.getElementById("loginTime").textContent = localStorage.getItem("loginTime") || "N/A";
+    const name = localStorage.getItem("name");
+    const email = localStorage.getItem("email");
+    const loginTime = localStorage.getItem("loginTime");
 
-    // Load and render cart
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    const container = document.getElementById("cartItemsContainer");
-
-    if (cart.length === 0) {
-      container.innerHTML = "<p>Your cart is empty.</p>";
-    } else {
-      cart.forEach(item => {
-        const div = document.createElement("div");
-        div.className = "cart-item";
-        div.textContent = `${item.name} (Qty: ${item.qty}) - $${item.price}`;
-        container.appendChild(div);
-      });
+    if (!email || !name) {
+      window.location.href = "login.html";
     }
 
-    // Send cart data to SFMC
-    function sendToSFMC() {
-      const name = localStorage.getItem("name") || "Unknown";
-      const email = localStorage.getItem("email") || "unknown@example.com";
-      const cartItems = JSON.stringify(cart);
-      const timestamp = new Date().toLocaleString("en-US");
+    document.getElementById("userName").textContent = name;
+    document.getElementById("userEmail").textContent = email;
+    document.getElementById("loginTime").textContent = loginTime || "N/A";
 
-      const form = document.getElementById("sfmcForm");
-      form.email.value = email;
-      form.name.value = name;
-      form.cartItems.value = cartItems;
-      form.timestamp.value = timestamp;
+    const cartKey = `cart_items_${email}`;
+    let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
 
-      form.submit(); // Submits the form (CORS-safe)
+    const productImages = {
+      p1: "https://via.placeholder.com/80x60?text=Laptop",
+      p2: "https://via.placeholder.com/80x60?text=Phone",
+      p3: "https://via.placeholder.com/80x60?text=Headphones"
+    };
+
+    function renderCart() {
+      const container = document.getElementById("cartContainer");
+      container.innerHTML = "";
+
+      if (cart.length === 0) {
+        container.innerHTML = '<p class="empty-cart">Your cart is empty.</p>';
+        document.getElementById("sendToSFMCBtn").style.display = "none";
+        return;
+      }
+
+      document.getElementById("sendToSFMCBtn").style.display = "inline-block";
+
+      const table = document.createElement("table");
+
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+            <th>Remove</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${cart.map(item => `
+            <tr>
+              <td><img src="${productImages[item.item] || 'https://via.placeholder.com/80x60?text=No+Image'}" alt="${item.name}" class="product-image" /></td>
+              <td>${item.name}</td>
+              <td>$${item.price.toFixed(2)}</td>
+              <td>
+                <input type="number" min="1" value="${item.quantity}" onchange="updateQuantity('${item.item}', this.value)" style="width: 50px;"/>
+              </td>
+              <td>$${(item.price * item.quantity).toFixed(2)}</td>
+              <td><button onclick="removeItem('${item.item}')">X</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `;
+
+      container.appendChild(table);
+    }
+
+    function updateQuantity(itemId, newQty) {
+      const qty = parseInt(newQty);
+      if (isNaN(qty) || qty < 1) {
+        alert("Quantity must be 1 or more.");
+        renderCart();
+        return;
+      }
+      const index = cart.findIndex(i => i.item === itemId);
+      if (index !== -1) {
+        cart[index].quantity = qty;
+        saveCart();
+      }
+      renderCart();
+    }
+
+    function removeItem(itemId) {
+      cart = cart.filter(i => i.item !== itemId);
+      saveCart();
+      renderCart();
+    }
+
+    function saveCart() {
+      localStorage.setItem(cartKey, JSON.stringify(cart));
     }
 
     function logout() {
-      localStorage.clear();
-      window.location.href = "index.html";
+      if (confirm("Are you sure you want to logout?")) {
+        localStorage.clear();
+        window.location.href = "index.html";
+      }
     }
+
+    function sendToSFMC() {
+      if (cart.length === 0) {
+        alert("Your cart is empty.");
+        return;
+      }
+
+      const payload = {
+        email: email,
+        name: name,
+        loginTime: loginTime,
+        cartItems: cart.map(item => ({
+          item: item.item,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        }))
+      };
+
+      const cloudPageUrl = "https://mcbpcpxtk6qzkpnzk1spgzn07rh0.pub.sfmc-content.com/dyp1jbqcr2l"; // Replace with your actual Cloud Page URL
+
+      fetch(cloudPageUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(response => {
+        if (response.ok) {
+          alert("Cart data sent to SFMC successfully!");
+        } else {
+          alert("Failed to send data. Server responded with " + response.status);
+        }
+      })
+      .catch(err => {
+        alert("Error sending data: " + err.message);
+      });
+    }
+
+    renderCart();
   </script>
 
 </body>
