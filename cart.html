@@ -46,14 +46,13 @@
 
   <button onclick="sendToSFMC()">Send to SFMC</button>
 
-  <!-- Inline script instead of module -->
   <script>
-    // Display user info
+    // Load user info
     document.getElementById("userName").textContent = localStorage.getItem("name") || "Unknown";
     document.getElementById("userEmail").textContent = localStorage.getItem("email") || "unknown@example.com";
     document.getElementById("loginTime").textContent = localStorage.getItem("loginTime") || "N/A";
 
-    // Load and display cart
+    // Load and render cart
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
     const container = document.getElementById("cartItemsContainer");
 
@@ -68,14 +67,17 @@
       });
     }
 
-    // Send to SFMC function (POST to Cloud Page)
-    async function sendCartToSFMC({ email, name, cartItems }) {
+    // Main sending function
+    async function sendToSFMC() {
+      const name = localStorage.getItem("name") || "Unknown";
+      const email = localStorage.getItem("email") || "unknown@example.com";
+      const cartItems = JSON.stringify(cart);
       const timestamp = new Date().toLocaleString("en-US");
 
       const formData = new URLSearchParams({
         email,
         name,
-        cartItems: JSON.stringify(cartItems),
+        cartItems,
         timestamp
       });
 
@@ -90,28 +92,14 @@
 
         const result = await response.text();
         console.log("SFMC response:", result);
-        alert("Cart sent to SFMC!");
+        alert("Cart data sent to SFMC successfully.");
       } catch (error) {
         console.error("Error sending to SFMC:", error);
-        alert("Error sending data to SFMC");
+        alert("Failed to send data to SFMC.");
       }
     }
 
-    // Trigger function on button click
-    function sendToSFMC() {
-      const name = localStorage.getItem("name") || "Unknown";
-      const email = localStorage.getItem("email") || "unknown@example.com";
-      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-
-      if (!email || cart.length === 0) {
-        alert("Missing email or cart is empty.");
-        return;
-      }
-
-      sendCartToSFMC({ name, email, cartItems: cart });
-    }
-
-    // Clear data and go to login
+    // Logout function
     function logout() {
       localStorage.clear();
       window.location.href = "index.html";
