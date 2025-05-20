@@ -18,8 +18,8 @@
 <body>
   <header>
     <div>
-      <strong>User:</strong> <span id="userInfo"></span><br />
-      <strong>Login Time:</strong> <span id="loginTime"></span>
+      <strong>User:</strong> <span id="userInfo">N/A</span><br />
+      <strong>Login Time:</strong> <span id="loginTime">N/A</span>
     </div>
     <button onclick="logout()">Logout</button>
   </header>
@@ -27,7 +27,7 @@
   <h1>Your Cart</h1>
   <div id="cartItems"></div>
 
-  <div id="actions">
+  <div id="actions" style="display: none;">
     <button onclick="sendToSFMC()">Send to SFMC</button>
     <a href="products.html">Continue Shopping</a>
   </div>
@@ -40,36 +40,38 @@
   </form>
 
   <script>
-    const email = localStorage.getItem("user_email");
     const name = localStorage.getItem("user_name");
+    const email = localStorage.getItem("user_email");
     const loginTime = localStorage.getItem("login_time");
 
-    if (!email || !name) {
-      window.location.href = "login.html";
-    } else {
-      document.getElementById("userInfo").innerText = `${name} (${email})`;
-      document.getElementById("loginTime").innerText = loginTime;
-    }
+    // Display user info
+    document.getElementById("userInfo").innerText = name && email ? `${name} (${email})` : "Guest";
+    document.getElementById("loginTime").innerText = loginTime || "N/A";
 
     function logout() {
-      // Clear session info only, keep cart data intact
       localStorage.removeItem("user_name");
       localStorage.removeItem("user_email");
       localStorage.removeItem("login_time");
       window.location.href = "login.html";
     }
 
-    const cartKey = `cart_items_${email}`;
-    let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
+    // Load cart
+    const cartKey = email ? `cart_items_${email}` : null;
+    let cart = cartKey ? JSON.parse(localStorage.getItem(cartKey) || "[]") : [];
+
     const container = document.getElementById("cartItems");
+    const actions = document.getElementById("actions");
 
     function renderCart() {
       container.innerHTML = "";
-      if (cart.length === 0) {
+
+      if (!cart || cart.length === 0) {
         container.innerHTML = "<p>Your cart is empty.</p>";
+        actions.style.display = "none";
         return;
       }
-      cart.forEach((item, idx) => {
+
+      cart.forEach((item, index) => {
         const div = document.createElement("div");
         div.innerHTML = `
           <img src="${item.image}" alt="${item.name}" />
@@ -78,13 +80,35 @@
             Quantity: ${item.quantity}<br />
             Price: $${item.price.toFixed(2)}
           </div>
-          <button class="remove-btn" onclick="removeItem(${idx})">Remove</button>
+          <button class="remove-btn" onclick="removeItem(${index})">Remove</button>
         `;
         container.appendChild(div);
       });
+
+      actions.style.display = "flex";
     }
 
     function removeItem(index) {
-      if (index >= 0 && index < cart.length) {
-        cart.splice(index, 1);
-        localStorage.setItem
+      cart.splice(index, 1);
+      localStorage.setItem(cartKey, JSON.stringify(cart));
+      renderCart();
+    }
+
+    function sendToSFMC() {
+      if (!email || !name || cart.length === 0) {
+        alert("Cannot send empty cart or missing user info.");
+        return;
+      }
+
+      document.getElementById("formEmail").value = email;
+      document.getElementById("formName").value = name;
+      document.getElementById("formTimestamp").value = loginTime;
+      document.getElementById("formCartItems").value = JSON.stringify(cart);
+
+      document.getElementById("sfmcForm").submit();
+    }
+
+    renderCart();
+  </script>
+</body>
+</html>
