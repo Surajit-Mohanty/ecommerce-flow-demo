@@ -3,7 +3,7 @@ function loginUser(name, email) {
   sessionStorage.setItem('user', JSON.stringify({
     name, email, loginTime: new Date().toLocaleString()
   }));
-  window.location.href = 'productpage.html';
+  window.location.href = 'products.html';
 }
 
 // Load user
