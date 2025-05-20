@@ -1,13 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Cart</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
   <style>
     body { font-family: Arial; max-width: 800px; margin: auto; }
-    #cartItems > div { border: 1px solid #ddd; padding: 15px; margin: 10px 0; display: flex; align-items: center; }
+    #cartItems > div {
+      border: 1px solid #ddd; 
+      padding: 15px; 
+      margin: 10px 0; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+    }
     #cartItems img { margin-right: 20px; width: 80px; height: auto; }
+    .item-details {
+      flex-grow: 1;
+    }
+    .remove-link {
+      color: red;
+      cursor: pointer;
+      margin-left: 20px;
+      text-decoration: underline;
+    }
     button { padding: 10px 15px; margin-top: 10px; }
     header { display: flex; justify-content: space-between; margin-bottom: 20px; }
   </style>
@@ -15,7 +31,7 @@
 <body>
   <header>
     <div>
-      <strong>User:</strong> <span id="userInfo"></span><br>
+      <strong>User:</strong> <span id="userInfo"></span><br />
       <strong>Login Time:</strong> <span id="loginTime"></span>
     </div>
     <button onclick="logout()">Logout</button>
@@ -27,10 +43,10 @@
   <a href="products.html">Continue Shopping</a>
 
   <form id="sfmcForm" action="https://mcbpcpxtk6qzkpnzk1spgzn07rh0.pub.sfmc-content.com/dyp1jbqcr2l" method="post" style="display:none;">
-    <input type="hidden" name="email" id="formEmail">
-    <input type="hidden" name="name" id="formName">
-    <input type="hidden" name="timestamp" id="formTimestamp">
-    <input type="hidden" name="cartitems" id="formCartItems">
+    <input type="hidden" name="email" id="formEmail" />
+    <input type="hidden" name="name" id="formName" />
+    <input type="hidden" name="timestamp" id="formTimestamp" />
+    <input type="hidden" name="cartitems" id="formCartItems" />
   </form>
 
   <script>
@@ -41,33 +57,53 @@
     if (!email || !name) {
       window.location.href = "login.html";
     } else {
-      document.getElementById("userInfo").innerText = name + " (" + email + ")";
+      document.getElementById("userInfo").innerText = `${name} (${email})`;
       document.getElementById("loginTime").innerText = loginTime;
     }
 
     function logout() {
       localStorage.clear();
-      window.location.href = "login.html";
+      window.location.href = "index.html"; // Make sure login.html exists exactly with lowercase
     }
 
-    const cartKey = `cart_items_${email}`;
-    const cart = JSON.parse(localStorage.getItem(cartKey)) || [];
+    let cartKey = `cart_items_${email}`;
+    let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
     const container = document.getElementById("cartItems");
 
-    cart.forEach(item => {
-      const div = document.createElement("div");
-      div.innerHTML = `
-        <img src="${item.image}" alt="${item.name}">
-        <div>
-          <strong>${item.name}</strong><br>
-          Quantity: ${item.quantity}<br>
-          Price: $${item.price}<br>
-        </div>
-      `;
-      container.appendChild(div);
-    });
+    function renderCart() {
+      container.innerHTML = "";
+      if (cart.length === 0) {
+        container.innerHTML = "<p>Your cart is empty.</p>";
+        return;
+      }
+      cart.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <img src="${item.image}" alt="${item.name}" />
+          <div class="item-details">
+            <strong>${item.name}</strong><br />
+            Quantity: ${item.quantity}<br />
+            Price: $${item.price}
+          </div>
+          <div>
+            <span class="remove-link" onclick="removeFromCart(${index})">Remove</span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function removeFromCart(index) {
+      cart.splice(index, 1); // Remove item at index
+      localStorage.setItem(cartKey, JSON.stringify(cart)); // Save updated cart
+      renderCart(); // Update UI
+    }
 
     function sendToSFMC() {
+      if (cart.length === 0) {
+        alert("Cart is empty. Please add items before sending.");
+        return;
+      }
       const form = document.getElementById("sfmcForm");
       document.getElementById("formEmail").value = email;
       document.getElementById("formName").value = name;
@@ -75,6 +111,8 @@
       document.getElementById("formCartItems").value = JSON.stringify(cart);
       form.submit();
     }
+
+    renderCart();
   </script>
 </body>
 </html>
